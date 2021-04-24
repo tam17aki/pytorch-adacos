@@ -30,8 +30,8 @@ class AdaCos(nn.Module):
         one_hot.scatter_(1, label.view(-1, 1).long(), 1)
         with torch.no_grad():
             B_avg = torch.where(one_hot < 1, torch.exp(self.s * logits), torch.zeros_like(logits))
-            B_avg = torch.sum(B_avg) / input.size(0)
-            # print(B_avg)
+            B_avg = torch.mean(torch.sum(B_avg, dim=1))
+            B_avg = torch.clamp(B_avg, max=math.exp(1) - 1e-7)  # black magic!
             theta_med = torch.median(theta[one_hot == 1])
             self.s = torch.log(B_avg) / torch.cos(torch.min(math.pi/4 * torch.ones_like(theta_med), theta_med))
         output = self.s * logits
